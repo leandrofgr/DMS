@@ -1,0 +1,39 @@
+function [ variable_gaussian ] = fast_joint_ressample_Gaussian_transform( data2transform, reference_variables, grid_size)
+
+
+min2norm = min(reference_variables);
+max2norm = max(reference_variables);
+
+reference_variables = reference_variables - repmat(min2norm, size(reference_variables,1), 1); %normaliza
+reference_variables = reference_variables ./ repmat(max2norm, size(reference_variables,1), 1);
+
+data2transform = data2transform - repmat(min2norm, size(data2transform,1), 1); 
+data2transform = data2transform ./ repmat(max2norm, size(data2transform,1), 1);
+
+% tic
+for i = 1:1:size(data2transform,1) %para cada ruído repete;
+    logs_target = reference_variables;
+    nois = data2transform(i,:);
+    for j =1:1:size(nois,2) %para cada log repete
+        
+        logs_sub = sort(logs_target(~isnan(logs_target(:,1)),j));  %gera cumulativa
+        
+        if size(logs_sub,1) > 1
+            logs_cumhist = logs_sub;
+            logs_sub2 = nois(j);
+            % Sum an infinitesinal line to avoid intep problems
+            logs_cumhist = logs_cumhist + [1:length(logs_cumhist)]'*1e-10;
+            variable_gaussian(i,j) = interp1( logs_cumhist,[1:length(logs_cumhist)]/length(logs_cumhist),nois(j) );
+        else
+            variable_gaussian(i,j) = 
+            logs_sub2 = nois(j);
+        end
+        
+        index = abs(logs_target(:,j) - logs_sub2) < grid_size; %filtra apenas valores em torno do valor amostrado                        
+        logs_target(~index,:) = NaN;
+    end
+end
+% toc
+
+
+end
