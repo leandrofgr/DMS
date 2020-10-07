@@ -1,21 +1,27 @@
 %% %%%%% CLEAN WORKSPACE AND PREVIOUS SIMULATION FILES %%%%%
 close all;
 clc;clear;
-if exist('Source Code/Library/Third Party/ppmt_le/par/','dir');rmdir('Source Code/Library/Third Party/ppmt_le/par/','s');mkdir('Source Code/Library/Third Party/ppmt_le/par/');else mkdir('Source Code/Library/Third Party/ppmt_le/par/');end 
-if exist('Source Code/Library/Third Party/ppmt_le/data/','dir');rmdir('Source Code/Library/Third Party/ppmt_le/data/','s');mkdir('Source Code/Library/Third Party/ppmt_le/data/');else mkdir('Source Code/Library/Third Party/ppmt_le/data/');end 
+if exist('Source Code/Library/Third Party/ppmt_le/par/','dir');rmdir('Source Code/Library/Third Party/ppmt_le/par/','s');mkdir('Source Code/Library/Third Party/ppmt_le/par/');else mkdir('Source Code/Library/Third Party/ppmt_le/par/');end
+if exist('Source Code/Library/Third Party/ppmt_le/data/','dir');rmdir('Source Code/Library/Third Party/ppmt_le/data/','s');mkdir('Source Code/Library/Third Party/ppmt_le/data/');else mkdir('Source Code/Library/Third Party/ppmt_le/data/');end
 if exist('sgsim.dbg');delete('sgsim.dbg');end
 
-load('datasets/HardData_ReferenceModel_size100_range20.mat');
+%load('datasets/HardData_ReferenceModel_size100_range20.mat');
+load('datasets/HardData_ReferenceModel_size40_range20.mat');
+
+n_cond_points = 50;
+cond_value_ = cond_value(1:n_cond_points ,:);
+cond_pos_ = cond_pos(1:n_cond_points ,:);
 
 %% EXECUTION OF PROJECTION PERSUIT MULTIVARIATE TRANSFORMATION (PPMT)
-% Connectionism and Cognitive Science Lab  
+% Connectionism and Cognitive Science Lab
 %
 %% DATA PREPARATION FOR PPMT
-load('reference_data.mat');
+load('datasets/reference_data.mat');
 reference_logs = [z1_analytic, z2_analytic, z3_analytic, z4_analytic, z5_analytic, z6_analytic];
 
-dx_sim = 50;
-dy_sim = 50;
+I = size(reference_models,2);
+J = size(reference_models,3);
+
 simulation_ranges = [20 20];
 
 dx_ref = 200;
@@ -32,12 +38,12 @@ variable_names = variable_names(index_variables_to_sim);
 y = repmat(1:dy_ref,[dx_ref 1]);x = repmat(1:dx_ref,[dy_ref 1])';z = ones(dx_ref,dy_ref);
 grid_v = [reshape(x,[dy_ref*dx_ref 1]) reshape(y,[dy_ref*dx_ref 1]) reshape(z,[dy_ref*dx_ref 1])];
 
-[cond_pos,ind_cond_unique] = unique(cond_pos,'rows');
+[cond_pos_,ind_cond_unique] = unique(cond_pos_,'rows');
 condtioning_indexes = zeros(size(grid_v,1),1);
-for cp_id = 1:size(cond_pos,1)
-    ind = logical(ismember(grid_v(:,1),cond_pos(cp_id,1)))&...
-        logical(ismember(grid_v(:,2),cond_pos(cp_id,2)));
-    analytic_ref_logs(ind,:) = cond_value(cp_id,:);
+for cp_id = 1:size(cond_pos_,1)
+    ind = logical(ismember(grid_v(:,1),cond_pos_(cp_id,1)))&...
+        logical(ismember(grid_v(:,2),cond_pos_(cp_id,2)));
+    analytic_ref_logs(ind,:) = cond_value_(cp_id,:);
     
     condtioning_indexes = condtioning_indexes + double(ind);
 end
@@ -73,15 +79,15 @@ for sim_id = 1:n_vars
     sgs_param = [];
     sgs_param.min = 1.05*min(ppmt_out(:,sim_id));
     sgs_param.max = 1.05*max(ppmt_out(:,sim_id));
-    sgs_param.cellsx = dx_sim;
-    sgs_param.cellsy = dy_sim;
+    sgs_param.cellsx = I;
+    sgs_param.cellsy = J;
     column_id = 3 + sim_id;
-    sgs_param.variogram_model = 2; %1.Sph; 2.Exp; 3.Gauss; 4.Power; 5.Cossine
-    sgs_param.range = simulation_ranges; 
+    sgs_param.variogram_model = 1; %1.Sph; 2.Exp; 3.Gauss; 4.Power; 5.Cossine
+    sgs_param.range = simulation_ranges;
     sgs_param.seed = [num2str(sim_id),'69069'];%2*(randi(9598)+randi(9598)+randi(9598))+1;
     sgs_param.search_radius = sgs_param.range*4;
     sgs_param.sgs_par_file = ['Source Code/Library/Third Party/ppmt_le/par/sgs',num2str(sim_id),'.par'];
-    sgs_param.input_file = 'Source Code/Library/Third Party/ppmt_le/data/ppmt.dat'; 
+    sgs_param.input_file = 'Source Code/Library/Third Party/ppmt_le/data/ppmt.dat';
     sgs_param.output_file = ['Source Code/Library/Third Party/ppmt_le/data/sgs',num2str(sim_id),'.dat'];
     generate_sgs_par(sgs_param,column_id);
     system(['"Source Code/Library/Third Party/ppmt_le/exe/sgsim.exe" "',sgs_param.sgs_par_file,'"']);
@@ -91,7 +97,7 @@ end
 simulations = [];
 for sim_id = 1:n_vars
     simulations = [simulations,dlmread(['Source Code/Library/Third Party/ppmt_le/data/sgs',num2str(sim_id),'.dat'],'\t',3,0)];
-%      delete(['data/sgs',num2str(sim_id),'.dat']);
+    %      delete(['data/sgs',num2str(sim_id),'.dat']);
 end
 save_table_dat('Unconditional SGS Simulations',variable_names,'Source Code/Library/Third Party/ppmt_le/data/sgs.dat', simulations);
 
@@ -99,8 +105,8 @@ save_table_dat('Unconditional SGS Simulations',variable_names,'Source Code/Libra
 ppmt_b_param.n_vars = n_vars;
 ppmt_b_param.min_max = [min(min(analytic_ref_logs)),max(max(analytic_ref_logs))];
 ppmt_b_param.columns = 1:n_vars;
-ppmt_b_param.cellsx = dx_sim;
-ppmt_b_param.cellsy = dy_sim;
+ppmt_b_param.cellsx = I;
+ppmt_b_param.cellsy = J;
 ppmt_b_param.ppmtb_par_file = 'Source Code/Library/Third Party/ppmt_le/par/ppmtb_par_file.par';
 ppmt_b_param.transf_table = ppmt_param.ppmt_table_file;
 ppmt_b_param.input_file = 'Source Code/Library/Third Party/ppmt_le/data/sgs.dat';
@@ -111,20 +117,27 @@ before_ppmtb_time = toc;
 system(['"Source Code/Library/Third Party/ppmt_le/exe/ppmt_b.exe" "',ppmt_b_param.ppmtb_par_file,'"']);
 total_simulation_time = toc;
 
-logs_simulated_ppmt = read_eas(ppmt_b_param.output_file)-K;
+simulation_ppmt = read_eas(ppmt_b_param.output_file)-K;
 save_table_dat('PPMT Back Transform: Conditional SGS Simulations',...
-    variable_names,ppmt_b_param.output_file,logs_simulated_ppmt);
+    variable_names,ppmt_b_param.output_file,simulation_ppmt);
 
 disp(['Time for Total Simulation: ',num2str(total_simulation_time)]);
 disp(['Time for PPMT Forward Transformation: ',num2str(forward_transformation_time)]);
 disp(['Time for PPMT Back Transformation: ',num2str(total_simulation_time-before_ppmtb_time)]);
 %% END OF SIMULATIONS AND DATA TRANSFORMATION
 
- generate_2D(reshape(logs_simulated_ppmt',6,dx_sim,dx_sim))
- generate_histograms(logs_simulated_ppmt)
-   
- load('reference_data.mat')
- reference = [z1_analytic z2_analytic, z3_analytic, z4_analytic, z5_analytic, z6_analytic];
- num_of_bins = 50;
- aux_ppmt = [ logs_simulated_ppmt(:,1) logs_simulated_ppmt(:,2) logs_simulated_ppmt(:,3) logs_simulated_ppmt(:,4) logs_simulated_ppmt(:,5) logs_simulated_ppmt(:,6)];
- chi2_ppmt = generate_chi2(reference,aux_ppmt, num_of_bins,0)
+
+generate_2D(reference_models,cond_pos_)
+generate_2D(reshape(simulation_ppmt',6,I,I),cond_pos_)
+
+generate_histograms(reshape(reference_models,6,I*J)')
+generate_histograms(simulation_ppmt)
+
+
+load('datasets/reference_data.mat');
+reference = [z1_analytic z2_analytic, z3_analytic, z4_analytic, z5_analytic, z6_analytic];
+num_of_bins = 50;
+aux_ppmt = [ simulation_ppmt(:,1) simulation_ppmt(:,2) simulation_ppmt(:,3) simulation_ppmt(:,4) simulation_ppmt(:,5) simulation_ppmt(:,6)];
+chi2_ppmt = generate_chi2(reference,aux_ppmt, num_of_bins,0)
+
+
