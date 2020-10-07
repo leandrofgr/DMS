@@ -25,13 +25,25 @@ n_vars = 6; %number of variables to simulate
 index_variables_to_sim = 1:n_vars;
 K = 10000; %make reference data positive
 analytic_ref_logs = [z1_analytic, z2_analytic, z3_analytic, z4_analytic, z5_analytic, z6_analytic];
-analytic_ref_logs = analytic_ref_logs(:,index_variables_to_sim)+K;
 variable_names = {'z1','z2','z3','z4','z5','z6'};
 variable_names = variable_names(index_variables_to_sim);
 
 %CREATE GRID FOR REFERENCE DATA
 y = repmat(1:dy_ref,[dx_ref 1]);x = repmat(1:dx_ref,[dy_ref 1])';z = ones(dx_ref,dy_ref);
 grid_v = [reshape(x,[dy_ref*dx_ref 1]) reshape(y,[dy_ref*dx_ref 1]) reshape(z,[dy_ref*dx_ref 1])];
+
+[cond_pos,ind_cond_unique] = unique(cond_pos,'rows');
+condtioning_indexes = zeros(size(grid_v,1),1);
+for cp_id = 1:size(cond_pos,1)
+    ind = logical(ismember(grid_v(:,1),cond_pos(cp_id,1)))&...
+        logical(ismember(grid_v(:,2),cond_pos(cp_id,2)));
+    analytic_ref_logs(ind,:) = cond_value(cp_id,:);
+    
+    condtioning_indexes = condtioning_indexes + double(ind);
+end
+
+analytic_ref_logs = analytic_ref_logs(:,index_variables_to_sim)+K;
+
 %SAVE DATA
 save_table_dat('Reference Values',['X','Y','Z',variable_names(1:end)],'Source Code/Library/Third Party/ppmt_le/data/data.dat', [grid_v analytic_ref_logs] );
 
@@ -47,22 +59,29 @@ generate_ppmt_par(ppmt_param);
 tic
 system(['"Source Code/Library/Third Party/ppmt_le/exe/ppmt.exe" "',ppmt_param.ppmt_par_file,'"']);
 forward_transformation_time = toc;
+
+%Prepare Conditioning Points table
+ppmt_out_original = read_eas('Source Code/Library/Third Party/ppmt_le/data/ppmt.dat');
+
+ppmt_logs = ppmt_out_original(logical(condtioning_indexes),[1 2 3 end-n_vars+1:end]);
+save_table_dat('Conditioning_Points',['X','Y', 'Z',variable_names],'Source Code/Library/Third Party/ppmt_le/data/ppmt.dat', ppmt_logs);
+%%%
 %% %%%%% EXECUTE SEQUENTIAL GAUSSIAN SIMULATION %%%%%
 ppmt_out = read_eas(ppmt_param.ppmt_out);
 ppmt_out = ppmt_out(:,end-n_vars+1:end);
 for sim_id = 1:n_vars
     sgs_param = [];
-    sgs_param.min = min(ppmt_out(:,sim_id));
-    sgs_param.max = max(ppmt_out(:,sim_id));
+    sgs_param.min = 1.05*min(ppmt_out(:,sim_id));
+    sgs_param.max = 1.05*max(ppmt_out(:,sim_id));
     sgs_param.cellsx = dx_sim;
     sgs_param.cellsy = dy_sim;
-    column_id = n_vars + 3 + sim_id;
+    column_id = 3 + sim_id;
     sgs_param.variogram_model = 2; %1.Sph; 2.Exp; 3.Gauss; 4.Power; 5.Cossine
     sgs_param.range = simulation_ranges; 
     sgs_param.seed = [num2str(sim_id),'69069'];%2*(randi(9598)+randi(9598)+randi(9598))+1;
     sgs_param.search_radius = sgs_param.range*4;
     sgs_param.sgs_par_file = ['Source Code/Library/Third Party/ppmt_le/par/sgs',num2str(sim_id),'.par'];
-    sgs_param.input_file = ''; %considering an unconditional simulation
+    sgs_param.input_file = 'Source Code/Library/Third Party/ppmt_le/data/ppmt.dat'; 
     sgs_param.output_file = ['Source Code/Library/Third Party/ppmt_le/data/sgs',num2str(sim_id),'.dat'];
     generate_sgs_par(sgs_param,column_id);
     system(['"Source Code/Library/Third Party/ppmt_le/exe/sgsim.exe" "',sgs_param.sgs_par_file,'"']);
@@ -93,7 +112,7 @@ system(['"Source Code/Library/Third Party/ppmt_le/exe/ppmt_b.exe" "',ppmt_b_para
 total_simulation_time = toc;
 
 logs_simulated_ppmt = read_eas(ppmt_b_param.output_file)-K;
-save_table_dat('PPMT Back Transform: Unconditional SGS Simulations',...
+save_table_dat('PPMT Back Transform: Conditional SGS Simulations',...
     variable_names,ppmt_b_param.output_file,logs_simulated_ppmt);
 
 disp(['Time for Total Simulation: ',num2str(total_simulation_time)]);
@@ -109,5 +128,3 @@ disp(['Time for PPMT Back Transformation: ',num2str(total_simulation_time-before
  num_of_bins = 50;
  aux_ppmt = [ logs_simulated_ppmt(:,1) logs_simulated_ppmt(:,2) logs_simulated_ppmt(:,3) logs_simulated_ppmt(:,4) logs_simulated_ppmt(:,5) logs_simulated_ppmt(:,6)];
  chi2_ppmt = generate_chi2(reference,aux_ppmt, num_of_bins,0)
-
-
