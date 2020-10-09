@@ -5,7 +5,7 @@ figure
 for var = 1:size(models,1)
     subplot(2,round(size(models,1)/2),var)
     imagesc(squeeze(models(var,:,:)));
-    title('Z_1');
+    title('z^'+string(var));
    
     if nargin>1
         hold on

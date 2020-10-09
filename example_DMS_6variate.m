@@ -6,35 +6,38 @@ I = size(reference_models,2);
 J = size(reference_models,3);
 reference_variables = [reshape(reference_models(1,:,:),I*J,1) reshape(reference_models(2,:,:),I*J,1) reshape(reference_models(3,:,:),I*J,1) reshape(reference_models(4,:,:),I*J,1) reshape(reference_models(5,:,:),I*J,1) reshape(reference_models(6,:,:),I*J,1) ] ;
 
-[reference_variables_extended] = extend_dateset_KDE(reference_variables,2,0.05);
+% DKE: OPTIONAL
+%[reference_variables] = extend_dateset_KDE(reference_variables,2,0.05);
 
 grid_size = 0.05; 
-range = 20;
+range = 18;
 n_simulations = 1;
 
-n_cond_points = 10;
+n_cond_points = 20;
 cond_value_ = cond_value(1:n_cond_points ,:);
 cond_pos_ = cond_pos(1:n_cond_points ,:);
 
+% condicional DMS
+[simulations_all_dms] = DMS(I,J, range, grid_size, reference_variables, cond_pos_, cond_value_, n_simulations);
 
-%[logs_simulated_all] = DMS(I,J, range, grid_size, reference_variables_extended, cond_pos_, cond_value, n_simulations);
-[logs_simulated_all] = DMS(I,J, range, grid_size, reference_variables_extended, [], [], n_simulations);
 
-simulation = logs_simulated_all{1};
+simulation_dms = simulations_all_dms{1};
 
 generate_2D(reference_models,cond_pos_)
-generate_2D(simulation,cond_pos_)
+set_caxis_6variate
+generate_2D(simulation_dms,cond_pos_)
+set_caxis_6variate
 
 generate_histograms(reshape(reference_models,6,I*J)')
-generate_histograms(reference_variables_extended)
-generate_histograms(reshape(simulation,6,I*J)')
+generate_histograms(reshape(simulation_dms,6,I*J)')
 
-generate_isotropic_variograms(0.5,reference_models,simulation)
+%generate_isotropic_variograms(0.5,reference_models,simulation_dms,reshape(simulation_ppmt',6,I,I))
 
-load('reference_data.mat')
+load('datasets/reference_data.mat')
 reference = [z1_analytic z2_analytic, z3_analytic, z4_analytic, z5_analytic, z6_analytic];
 num_of_bins = 50;
-aux_dms = [ logs_simulated_ppmt(:,1) logs_simulated_ppmt(:,2) logs_simulated_ppmt(:,3) logs_simulated_ppmt(:,4) logs_simulated_ppmt(:,5) logs_simulated_ppmt(:,6)];
+aux_dms = reshape(simulation_dms,6,I*J)';
+%aux_dms = [ simulation(:,1) simulation(:,2) simulation(:,3) simulation(:,4) simulation(:,5) simulation(:,6)];
 chi2_dms = generate_chi2(reference,aux_dms, num_of_bins,0)
 
 
