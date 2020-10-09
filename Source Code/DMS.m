@@ -20,7 +20,7 @@ end
 
 %% DMS 
 logs_simulated_all = cell(num_of_sims,1);
-for n = 1:1:num_of_sims
+parfor n = 1:1:num_of_sims
     
     % simulating Gaussian realizations using FFTMA
     simulations2D = zeros(size(ref_variables,2), I, J);

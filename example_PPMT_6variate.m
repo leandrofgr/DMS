@@ -5,10 +5,10 @@ if exist('Source Code/Library/Third Party/ppmt_le/par/','dir');rmdir('Source Cod
 if exist('Source Code/Library/Third Party/ppmt_le/data/','dir');rmdir('Source Code/Library/Third Party/ppmt_le/data/','s');mkdir('Source Code/Library/Third Party/ppmt_le/data/');else mkdir('Source Code/Library/Third Party/ppmt_le/data/');end
 if exist('sgsim.dbg');delete('sgsim.dbg');end
 
-%load('datasets/HardData_ReferenceModel_size100_range20.mat');
-load('datasets/HardData_ReferenceModel_size40_range20.mat');
+load('datasets/HardData_ReferenceModel_size100_range20.mat');
+%load('datasets/HardData_ReferenceModel_size40_range20.mat');
 
-n_cond_points = 50;
+n_cond_points = 200;
 cond_value_ = cond_value(1:n_cond_points ,:);
 cond_pos_ = cond_pos(1:n_cond_points ,:);
 
@@ -22,7 +22,7 @@ reference_logs = [z1_analytic, z2_analytic, z3_analytic, z4_analytic, z5_analyti
 I = size(reference_models,2);
 J = size(reference_models,3);
 
-simulation_ranges = [20 20];
+simulation_ranges = [18 18];
 
 dx_ref = 200;
 dy_ref = 200;
@@ -38,7 +38,7 @@ variable_names = variable_names(index_variables_to_sim);
 y = repmat(1:dy_ref,[dx_ref 1]);x = repmat(1:dx_ref,[dy_ref 1])';z = ones(dx_ref,dy_ref);
 grid_v = [reshape(x,[dy_ref*dx_ref 1]) reshape(y,[dy_ref*dx_ref 1]) reshape(z,[dy_ref*dx_ref 1])];
 
-[cond_pos_,ind_cond_unique] = unique(cond_pos_,'rows');
+%[cond_pos_,ind_cond_unique] = unique(cond_pos_,'rows');
 condtioning_indexes = zeros(size(grid_v,1),1);
 for cp_id = 1:size(cond_pos_,1)
     ind = logical(ismember(grid_v(:,1),cond_pos_(cp_id,1)))&...
@@ -77,8 +77,8 @@ ppmt_out = read_eas(ppmt_param.ppmt_out);
 ppmt_out = ppmt_out(:,end-n_vars+1:end);
 for sim_id = 1:n_vars
     sgs_param = [];
-    sgs_param.min = 1.05*min(ppmt_out(:,sim_id));
-    sgs_param.max = 1.05*max(ppmt_out(:,sim_id));
+    sgs_param.min = min(ppmt_out(:,sim_id));
+    sgs_param.max = max(ppmt_out(:,sim_id));    
     sgs_param.cellsx = I;
     sgs_param.cellsy = J;
     column_id = 3 + sim_id;
@@ -128,7 +128,10 @@ disp(['Time for PPMT Back Transformation: ',num2str(total_simulation_time-before
 
 
 generate_2D(reference_models,cond_pos_)
+set_caxis_6variate
 generate_2D(reshape(simulation_ppmt',6,I,I),cond_pos_)
+set_caxis_6variate
+
 
 generate_histograms(reshape(reference_models,6,I*J)')
 generate_histograms(simulation_ppmt)
