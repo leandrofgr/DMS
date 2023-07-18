@@ -1,6 +1,8 @@
 n_variables = 2;
 
 
+addpath(genpath('SeReM'))
+
 %load('datasets/HardData_ReferenceModel_size200_range40.mat');
 load('datasets/HardData_ReferenceModel_size100_range20.mat');
 %load('datasets/HardData_ReferenceModel_size40_range20.mat');
@@ -18,6 +20,7 @@ cond_pos_ = cond_pos(1:n_cond_points ,1:n_variables);
 grid_size = 0.05;
 range = 18;
 n_simulations = 1;
+type = 'sph';
 
 %[reference_variables] = extend_dateset_KDE(reference_variables,2,0.05);
 
@@ -30,7 +33,7 @@ for simulation = 1:n_simulations
     
     cond_value_ = cond_value(1:n_cond_points ,1:n_variables);
     
-    [simulations_all_dms_order_12] = DMS(I,J, range, grid_size, reference_variables, cond_pos_, cond_value_, 1);
+    [simulations_all_dms_order_12] = DMS(I,J, range, type, grid_size, reference_variables, cond_pos_, cond_value_, 1);
     
     simulation_dms_order_12 = simulations_all_dms_order_12{1};
     
@@ -45,7 +48,7 @@ for simulation = 1:n_simulations
     n_cond_points = 20;
     cond_value_ = cond_value(1:n_cond_points ,n_variables:-1:1);
     
-    [simulations_all_dms_order_21] = DMS(I,J, range, grid_size, reference_variables, cond_pos_, cond_value_, 1);
+    [simulations_all_dms_order_21] = DMS(I,J, range, type, grid_size, reference_variables, cond_pos_, cond_value_, 1);
     
     simulation_dms_order_21 = simulations_all_dms_order_21{1};
     

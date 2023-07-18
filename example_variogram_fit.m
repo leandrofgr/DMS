@@ -1,4 +1,8 @@
 
+
+addpath(genpath('SeReM'))
+addpath(genpath('Third Party'))
+
 load('datasets/HardData_ReferenceModel_size100_range20.mat');
 %load('datasets/HardData_ReferenceModel_size40_range20.mat');
 I = size(reference_models,2);

@@ -1,5 +1,7 @@
 
 
+addpath(genpath('SeReM'))
+
 load('datasets/HardData_ReferenceModel_size200_range40.mat');
 I = size(reference_models,2);
 J = size(reference_models,3);
@@ -31,7 +33,7 @@ subplot(1,2,2)
 plot(cond_value_original(:,1),cond_value_original(:,2),'.')
 hold all
 plot(cond_value_original_(:,1),cond_value_original_(:,2),'.')
-title('Uniform')
+title('Non-parametric')
 grid
 
     
