@@ -1,0 +1,14 @@
+                        Parameters for PPMT
+                         *******************
+
+START OF PARAMETERS:
+Third Party/ppmt_le/data/data.dat     -input data file
+6 4 5 6 7 8 9 0              -  number of variables, variable cols, and wt col
+-5 1e21       -  trimming limits
+25 50 50            -min/max iterations and targeted Gauss perc. (see Note 1)
+1                   -spatial decorrelation? (0=no,1=yes) (see Note 2)
+1 2 0                -  x, y, z columns (0=none for z)
+50 25                -  lag distance, lag tolerance
+Third Party/ppmt_le/data/nscored_vars.dat           -output data file with normal score transformed variables
+Third Party/ppmt_le/data/ppmt.dat             -output data file with PPMT transformed variables
+Third Party/ppmt_le/par/ppmt_table.trn             -output transformation table (binary)
