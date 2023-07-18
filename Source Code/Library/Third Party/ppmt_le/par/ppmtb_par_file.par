@@ -1,8 +1,0 @@
-START OF PARAMETERS:
-Source Code/Library/Third Party/ppmt_le/par/ppmt_table.trn                      -file with transformation data
-Source Code/Library/Third Party/ppmt_le/data/sgs.dat                     -file with data to back-transform
-6 1  2  3  4  5  6                         - nvar, column numbers
--9.0 1.0e21       - trimming limits
-50 50 1 1                   - nx, ny, nz, nreal (ignored if nx = 0)
-Source Code/Library/Third Party/ppmt_le/data/out_simulations.out                    -file for back transformed values
-0                              -enforce N(0,1)? (0=no,1=yes)
